@@ -4,6 +4,11 @@
 
 A simple React dashboard I built to track my 30-day programming schedule, manage daily tasks, and calculate missed work hours.
 
+## Previews
+
+![Dashboard Dark Mode](screenshots/dark-mode.png)
+![Dashboard Light Mode](screenshots/light-mode.png)
+![Task Planner Form](screenshots/planner.png)
 ## Features
 
 * Persistence: Runs entirely in the browser. Uses local storage to automatically save all tasks, progress sliders, theme preferences, and scratchpad notes.

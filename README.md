@@ -1,16 +1,35 @@
-# React + Vite
+# 30-Day Schedule Tracker
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A simple React dashboard I built to track my 30-day programming schedule, manage daily tasks, and calculate missed work hours.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* Persistence: Runs entirely in the browser. Uses local storage to automatically save all tasks, progress sliders, and scratchpad notes.
+* Debt Engine: Calculates hours from incomplete tasks and aggregates them into a Sunday compensation tracker.
+* Two-View Layout: Includes a dashboard for viewing the weekly schedule and a planner form for adding new tasks.
+* Brain Dump: A sticky, auto-saving text area for logging random thoughts or links during deep work.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* React (Vite)
+* Tailwind CSS v4
 
-## Expanding the Oxlint configuration
+## Local Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+1. Clone the repository:
+   ```bash
+   git clone git@github.com:fetehadin/scheduleTracker.git
+
+    Install dependencies:
+    Bash
+
+    pnpm install
+
+    Start the development server:
+    Bash
+
+    pnpm run dev
+
+Deployment
+
+This project is deployed on Vercel.

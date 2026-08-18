@@ -4,12 +4,28 @@ const DAY_ORDER = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'F
 const SORTED_DAYS = Object.keys(DAY_ORDER).sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
 
 export default function PlannerView({ tasks, setTasks, activeWeek, setActiveWeek, setCurrentView }) {
-  const [newTask, setNewTask] = useState({ title: '', category: '', week: activeWeek, day: 'Monday', hours: 1 });
+  const [newTask, setNewTask] = useState({ 
+    title: '', 
+    category: '', 
+    week: activeWeek, 
+    day: 'Monday', 
+    hours: 1,
+    is_shareable: true // Defaults to public, per the schema
+  });
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
-    setTasks([...tasks, { id: Date.now(), ...newTask, hours: parseFloat(newTask.hours), allocatedHours: parseFloat(newTask.hours), progress: 0, note: '' }]);
+    
+    setTasks([...tasks, { 
+      id: Date.now(), 
+      ...newTask, 
+      hours: parseFloat(newTask.hours), 
+      allocatedHours: parseFloat(newTask.hours), 
+      progress: 0, 
+      note: '' 
+    }]);
+    
     setCurrentView('dashboard');
     setActiveWeek(parseInt(newTask.week));
   };
@@ -18,34 +34,96 @@ export default function PlannerView({ tasks, setTasks, activeWeek, setActiveWeek
     <div className="max-w-2xl mx-auto bg-white dark:bg-zinc-900 p-8 rounded-xl border border-zinc-200 dark:border-zinc-800">
       <h2 className="text-xl font-bold mb-6 border-b border-zinc-200 dark:border-zinc-800 pb-4">Schedule a New Task</h2>
       <form onSubmit={handleAddTask} className="space-y-5">
+        
         <div>
           <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Task Title</label>
-          <input type="text" autoFocus required value={newTask.title} onChange={(e) => setNewTask({...newTask, title: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" />
+          <input 
+            type="text" 
+            autoFocus 
+            required 
+            value={newTask.title} 
+            onChange={(e) => setNewTask({...newTask, title: e.target.value})} 
+            className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" 
+          />
         </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Category</label>
-            <input type="text" list="categories" required placeholder="e.g. Coding" value={newTask.category} onChange={(e) => setNewTask({...newTask, category: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" />
-            <datalist id="categories"><option value="Coding" /><option value="Reading" /><option value="Hustle" /><option value="Habit" /></datalist>
+            <input 
+              type="text" 
+              list="categories" 
+              required 
+              placeholder="e.g. Coding" 
+              value={newTask.category} 
+              onChange={(e) => setNewTask({...newTask, category: e.target.value})} 
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" 
+            />
+            <datalist id="categories">
+              <option value="Coding" />
+              <option value="Reading" />
+              <option value="Hustle" />
+              <option value="Habit" />
+            </datalist>
           </div>
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Hours</label>
-            <input type="number" min="0.5" step="0.5" required value={newTask.hours} onChange={(e) => setNewTask({...newTask, hours: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" />
+            <input 
+              type="number" 
+              min="0.5" 
+              step="0.5" 
+              required 
+              value={newTask.hours} 
+              onChange={(e) => setNewTask({...newTask, hours: e.target.value})} 
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" 
+            />
           </div>
         </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Week Number</label>
-            <input type="number" min="1" required value={newTask.week} onChange={(e) => setNewTask({...newTask, week: parseInt(e.target.value)})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" />
+            <input 
+              type="number" 
+              min="1" 
+              required 
+              value={newTask.week} 
+              onChange={(e) => setNewTask({...newTask, week: parseInt(e.target.value)})} 
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" 
+            />
           </div>
           <div>
             <label className="block text-xs font-bold text-zinc-500 uppercase mb-2">Day</label>
-            <select value={newTask.day} onChange={(e) => setNewTask({...newTask, day: e.target.value})} className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500">
+            <select 
+              value={newTask.day} 
+              onChange={(e) => setNewTask({...newTask, day: e.target.value})} 
+              className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500"
+            >
               {SORTED_DAYS.map(d => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
         </div>
-        <button type="submit" className="w-full mt-4 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold py-3 rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-300">Add to Schedule</button>
+
+        {/* Privacy Toggle */}
+        <div className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 mt-2 transition-colors">
+          <div>
+            <label className="block text-sm font-bold text-zinc-900 dark:text-zinc-100">Shareable Task</label>
+            <p className="text-xs text-zinc-500 mt-1">Allow approved connections to view this task.</p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input 
+              type="checkbox" 
+              className="sr-only peer" 
+              checked={newTask.is_shareable}
+              onChange={(e) => setNewTask({...newTask, is_shareable: e.target.checked})}
+            />
+            <div className="w-11 h-6 bg-zinc-200 peer-focus:outline-none rounded-full peer dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-600 peer-checked:bg-zinc-900 dark:peer-checked:bg-zinc-100"></div>
+          </label>
+        </div>
+
+        <button type="submit" className="w-full mt-6 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold py-3 rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors">
+          Add to Schedule
+        </button>
       </form>
     </div>
   );

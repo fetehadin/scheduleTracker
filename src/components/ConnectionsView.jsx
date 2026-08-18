@@ -52,9 +52,14 @@ export default function ConnectionsView({ session, setViewingFriend, setCurrentV
     setMessage({ text: '', type: '' });
     if (!searchUsername.trim()) return;
 
-    const { data: targetProfile, error: profileError } = await supabase.from('profiles').select('id').eq('username', searchUsername.trim()).single();
+    // FIX 2: Changed .eq() to .ilike() for case-insensitive searching
+    const { data: targetProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('username', searchUsername.trim()) 
+      .maybeSingle(); // maybeSingle prevents a hard error crash if 0 rows are found
 
-    if (profileError || !targetProfile) return setMessage({ text: 'User not found.', type: 'error' });
+    if (profileError || !targetProfile) return setMessage({ text: 'User not found. Check the username.', type: 'error' });
     if (targetProfile.id === myId) return setMessage({ text: 'You cannot connect with yourself.', type: 'error' });
 
     const { error: insertError } = await supabase.from('connections').insert([{ requester_id: myId, receiver_id: targetProfile.id, status: 'pending' }]);
@@ -95,7 +100,15 @@ export default function ConnectionsView({ session, setViewingFriend, setCurrentV
         )}
 
         <form onSubmit={handleSendRequest} className="flex gap-4">
-          <input type="text" placeholder="Enter exact username..." value={searchUsername} onChange={(e) => setSearchUsername(e.target.value)} className="flex-grow bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" />
+          <input 
+            type="text" 
+            name="friend-search" 
+            autoComplete="off" // FIX 1: Forces the browser to stop autofilling emails
+            placeholder="Enter username..." 
+            value={searchUsername} 
+            onChange={(e) => setSearchUsername(e.target.value)} 
+            className="flex-grow bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 text-sm focus:outline-none focus:border-zinc-500" 
+          />
           <button type="submit" className="px-6 py-3 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-300 transition-colors">Send Request</button>
         </form>
       </div>

@@ -1,15 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const DAY_ORDER = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
 const SORTED_DAYS = Object.keys(DAY_ORDER).sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
 
-export default function DashboardView({ tasks, updateTask, deleteTask, activeWeek, setActiveWeek, calculateDailyScore, readOnly, friendName, exitFriendView }) {
+export default function DashboardView({ 
+  tasks, updateTask, deleteTask, activeWeek, setActiveWeek, 
+  calculateDailyScore, readOnly, friendName, exitFriendView,
+  feedbacks = [], submitFeedback 
+}) {
+  const [selectedDay, setSelectedDay] = useState('All');
+  const [feedbackInputs, setFeedbackInputs] = useState({});
+
   const filteredTasks = tasks.filter(t => t.week === activeWeek);
   const tasksByDay = filteredTasks.reduce((acc, task) => {
     if (!acc[task.day]) acc[task.day] = [];
     acc[task.day].push(task);
     return acc;
   }, {});
+
+  // Determine which days to render based on the dropdown
+  const daysToRender = selectedDay === 'All' ? SORTED_DAYS : [selectedDay];
 
   return (
     <div className="space-y-8">
@@ -23,17 +33,32 @@ export default function DashboardView({ tasks, updateTask, deleteTask, activeWee
         </div>
       )}
 
-      {/* Infinite Week Navigator */}
-      <div className="flex items-center space-x-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
-        <button onClick={() => setActiveWeek(Math.max(1, activeWeek - 1))} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&larr;</button>
-        <span className="font-bold text-sm min-w-[4rem] text-center">Week {activeWeek}</span>
-        <button onClick={() => setActiveWeek(activeWeek + 1)} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&rarr;</button>
+      {/* Week & Day Pagination Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-8">
+        <div className="flex items-center space-x-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
+          <button onClick={() => setActiveWeek(Math.max(1, activeWeek - 1))} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&larr;</button>
+          <span className="font-bold text-sm min-w-[4rem] text-center">Week {activeWeek}</span>
+          <button onClick={() => setActiveWeek(activeWeek + 1)} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&rarr;</button>
+        </div>
+
+        <div className="flex items-center space-x-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
+          <span className="text-xs font-bold text-zinc-500 uppercase ml-2">Filter Day:</span>
+          <select 
+            value={selectedDay} 
+            onChange={(e) => setSelectedDay(e.target.value)}
+            className="bg-transparent text-sm font-bold focus:outline-none cursor-pointer pr-2 text-zinc-900 dark:text-zinc-100"
+          >
+            <option value="All">All Days</option>
+            {SORTED_DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {SORTED_DAYS.map(day => {
+        {daysToRender.map(day => {
           const dayTasks = tasksByDay[day] || [];
           const score = calculateDailyScore(dayTasks);
+          const dayFeedbacks = feedbacks.filter(f => f.day === day && f.week === activeWeek);
           
           if (dayTasks.length === 0) return null;
 
@@ -78,6 +103,45 @@ export default function DashboardView({ tasks, updateTask, deleteTask, activeWee
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Mentorship Engine / Feedback UI */}
+              <div className="mt-4 p-4 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                <h4 className="text-xs font-bold uppercase mb-3 text-zinc-500">Mentorship & Feedback</h4>
+                
+                {dayFeedbacks.length > 0 ? (
+                  <div className="space-y-2 mb-4">
+                    {dayFeedbacks.map(f => (
+                      <div key={f.id} className="text-sm p-3 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-700 shadow-sm">
+                        <span className="font-bold text-teal-600 dark:text-teal-400">@{f.sender_username}: </span>
+                        <span className="text-zinc-700 dark:text-zinc-300">{f.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-zinc-400 mb-4 italic">No feedback for this day yet.</p>
+                )}
+                
+                {readOnly && (
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder={`Leave feedback for @${friendName}...`}
+                      value={feedbackInputs[day] || ''}
+                      onChange={e => setFeedbackInputs({...feedbackInputs, [day]: e.target.value})}
+                      className="flex-grow bg-white dark:bg-zinc-950 border border-zinc-300 dark:border-zinc-700 rounded-lg p-2 text-sm focus:outline-none focus:border-zinc-500"
+                    />
+                    <button 
+                      onClick={() => {
+                        submitFeedback(day, feedbackInputs[day] || '');
+                        setFeedbackInputs({...feedbackInputs, [day]: ''});
+                      }} 
+                      className="px-4 py-2 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950 font-bold rounded-lg hover:bg-zinc-800 dark:hover:bg-zinc-300 text-sm transition-colors"
+                    >
+                      Send
+                    </button>
+                  </div>
+                )}
               </div>
             </section>
           );

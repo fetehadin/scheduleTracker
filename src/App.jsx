@@ -36,6 +36,7 @@ export default function App() {
 
   const [viewingFriend, setViewingFriend] = useState(null); 
   const [friendTasks, setFriendTasks] = useState([]);
+  const [feedbacks, setFeedbacks] = useState([]);
 
   // --- AUTHENTICATION & DATA SYNC ENGINE ---
   useEffect(() => {
@@ -111,6 +112,48 @@ export default function App() {
       }));
       setTasks(mappedTasks);
     }
+  };
+
+  // --- FEEDBACK & NAVIGATION ENGINE ---
+  useEffect(() => {
+    const fetchFeedbacks = async () => {
+      if (!session) return;
+      const targetId = viewingFriend ? viewingFriend.id : session.user.id;
+      
+      const { data, error } = await supabase
+        .from('daily_feedback')
+        .select(`id, week, day, message, sender_id, profiles!daily_feedback_sender_id_fkey(username)`)
+        .eq('receiver_id', targetId);
+        
+      if (data && !error) {
+        setFeedbacks(data.map(f => ({
+          id: f.id, week: f.week, day: f.day, message: f.message,
+          sender_username: f.profiles.username
+        })));
+      }
+    };
+    fetchFeedbacks();
+  }, [viewingFriend, session, activeWeek]);
+
+  const submitFeedback = async (day, message) => {
+    if (!message.trim() || !viewingFriend || !session) return;
+    
+    const { data, error } = await supabase.from('daily_feedback').insert([{
+      receiver_id: viewingFriend.id,
+      sender_id: session.user.id,
+      week: activeWeek,
+      day: day,
+      message: message.trim()
+    }]).select();
+
+    if (data && !error) {
+       setFeedbacks(prev => [...prev, { ...data[0], sender_username: session.user.user_metadata.username }]);
+    }
+  };
+
+  const handleNavigation = (view) => {
+    setCurrentView(view);
+    if (view === 'dashboard') setViewingFriend(null); 
   };
 
   // --- HYBRID DATA MUTATORS ---
@@ -199,7 +242,7 @@ export default function App() {
         
         <Header 
           isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} 
-          currentView={currentView} setCurrentView={setCurrentView} 
+          currentView={currentView} setCurrentView={handleNavigation} 
           debtHours={debtHours} handleResetDebt={handleResetDebt}
           session={session}
         />
@@ -215,6 +258,8 @@ export default function App() {
             readOnly={!!viewingFriend} 
             friendName={viewingFriend?.username}
             exitFriendView={() => setViewingFriend(null)} 
+            feedbacks={feedbacks}
+            submitFeedback={submitFeedback}
           />
         )}
         

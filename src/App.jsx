@@ -97,7 +97,8 @@ export default function App() {
       localStorage.removeItem('protocol_tasks_prod');
     }
 
-    const { data, error } = await supabase.from('tasks').select('*');
+    // FIX: Only fetch tasks that belong exactly to the logged-in user
+    const { data, error } = await supabase.from('tasks').select('*').eq('user_id', userId);
     if (!error && data) {
       const mappedTasks = data.map(t => ({
         id: t.id,
@@ -122,13 +123,17 @@ export default function App() {
       
       const { data, error } = await supabase
         .from('daily_feedback')
-        .select(`id, week, day, message, sender_id, profiles!daily_feedback_sender_id_fkey(username)`)
+        .select(`id, week, day, message, sender_id, profiles!sender_id(username)`)
         .eq('receiver_id', targetId);
         
+      if (error) {
+        console.error("Supabase Fetch Error (Feedback):", error.message);
+      }
+
       if (data && !error) {
         setFeedbacks(data.map(f => ({
           id: f.id, week: f.week, day: f.day, message: f.message,
-          sender_username: f.profiles.username
+          sender_username: f.profiles?.username || 'Unknown'
         })));
       }
     };
@@ -179,6 +184,8 @@ export default function App() {
       const { data, error } = await supabase.from('tasks').insert([dbTask]).select();
       if (!error && data) {
         setTasks(prev => [...prev, { ...taskData, id: data[0].id, allocatedHours: data[0].allocated_hours, progress: 0, note: '' }]);
+      } else {
+        alert("Failed to add task to cloud.");
       }
     } else {
       setTasks(prev => [...prev, { ...taskData, id: Date.now(), allocatedHours: parseFloat(taskData.hours), progress: 0, note: '' }]);
@@ -190,14 +197,24 @@ export default function App() {
 
     if (session) {
       const dbField = field === 'allocatedHours' ? 'allocated_hours' : field;
-      await supabase.from('tasks').update({ [dbField]: value }).eq('id', id);
+      const { error } = await supabase.from('tasks').update({ [dbField]: value }).eq('id', id);
+      // FIX: Alert if the background update fails
+      if (error) {
+        console.error("Update Error:", error);
+        alert(`Failed to save update to the cloud: ${error.message}`);
+      }
     }
   };
 
   const deleteTask = async (id) => {
     setTasks(prev => prev.filter(t => t.id !== id));
     if (session) {
-      await supabase.from('tasks').delete().eq('id', id);
+      const { error } = await supabase.from('tasks').delete().eq('id', id);
+      // FIX: Alert if the background delete fails
+      if (error) {
+        console.error("Delete Error:", error);
+        alert(`Failed to delete task from the cloud: ${error.message}`);
+      }
     }
   };
 

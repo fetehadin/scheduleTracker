@@ -15,7 +15,6 @@ export default function App() {
     return savedTheme !== null ? JSON.parse(savedTheme) : true; 
   });
 
-  // Start with whatever is in local storage (Local Mode)
   const [tasks, setTasks] = useState(() => {
     const saved = localStorage.getItem('protocol_tasks_prod');
     return saved ? JSON.parse(saved) : []; 
@@ -57,8 +56,6 @@ export default function App() {
   useEffect(() => {
     const fetchFriendTasks = async () => {
       if (!viewingFriend) return;
-      // Because we set up Row-Level Security, Supabase will automatically
-      // reject this if we aren't friends, and only return is_shareable = true.
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -81,7 +78,6 @@ export default function App() {
   }, [viewingFriend]);
 
   const syncCloudTasks = async (userId) => {
-    // 1. The Migration: Move local tasks to cloud
     const localTasks = JSON.parse(localStorage.getItem('protocol_tasks_prod') || '[]');
     if (localTasks.length > 0) {
       const formattedTasks = localTasks.map(t => ({
@@ -97,17 +93,16 @@ export default function App() {
       }));
       
       await supabase.from('tasks').insert(formattedTasks);
-      localStorage.removeItem('protocol_tasks_prod'); // Wipe local trace
+      localStorage.removeItem('protocol_tasks_prod');
     }
 
-    // 2. The Fetch: Pull master data from cloud
     const { data, error } = await supabase.from('tasks').select('*');
     if (!error && data) {
       const mappedTasks = data.map(t => ({
         id: t.id,
         title: t.title,
         category: t.category,
-        allocatedHours: t.allocated_hours, // Convert snake_case to camelCase for React
+        allocatedHours: t.allocated_hours,
         progress: t.progress,
         week: t.week,
         day: t.day,
@@ -142,7 +137,6 @@ export default function App() {
   };
 
   const updateTask = async (id, field, value) => {
-    // Optimistic UI Update (instant feel for the user)
     setTasks(prev => prev.map(t => t.id === id ? { ...t, [field]: value } : t));
 
     if (session) {
@@ -165,7 +159,6 @@ export default function App() {
     else document.documentElement.classList.remove('dark');
   }, [isDarkMode]);
 
-  // Only write to localStorage if we are offline
   useEffect(() => { if (!session) localStorage.setItem('protocol_tasks_prod', JSON.stringify(tasks)); }, [tasks, session]);
   useEffect(() => { localStorage.setItem('protocol_dumps_prod', JSON.stringify(brainDumps)); }, [brainDumps]);
   useEffect(() => { localStorage.setItem('protocol_forgiven_prod', JSON.stringify(forgivenDebt)); }, [forgivenDebt]);
@@ -211,9 +204,48 @@ export default function App() {
           session={session}
         />
 
-        {currentView === 'dashboard' && <DashboardView tasks={tasks} updateTask={updateTask} deleteTask={deleteTask} activeWeek={activeWeek} setActiveWeek={setActiveWeek} calculateDailyScore={calculateDailyScore} />}
-        {currentView === 'planner' && <PlannerView addTask={addTask} activeWeek={activeWeek} setActiveWeek={setActiveWeek} setCurrentView={setCurrentView} />}
-        {currentView === 'braindump' && <BrainDumpView brainDumps={brainDumps} setBrainDumps={setBrainDumps} />}
+        {currentView === 'dashboard' && (
+          <DashboardView 
+            tasks={viewingFriend ? friendTasks : tasks} 
+            updateTask={updateTask} 
+            deleteTask={deleteTask} 
+            activeWeek={activeWeek} 
+            setActiveWeek={setActiveWeek} 
+            calculateDailyScore={calculateDailyScore}
+            readOnly={!!viewingFriend} 
+            friendName={viewingFriend?.username}
+            exitFriendView={() => setViewingFriend(null)} 
+          />
+        )}
+        
+        {currentView === 'planner' && (
+          <PlannerView 
+            addTask={addTask} 
+            activeWeek={activeWeek} 
+            setActiveWeek={setActiveWeek} 
+            setCurrentView={setCurrentView} 
+          />
+        )}
+        
+        {currentView === 'braindump' && (
+          <BrainDumpView 
+            brainDumps={brainDumps} 
+            setBrainDumps={setBrainDumps} 
+          />
+        )}
+        
+        {currentView === 'network' && (
+           session ? (
+             <ConnectionsView 
+               session={session} 
+               setViewingFriend={setViewingFriend} 
+               setCurrentView={setCurrentView} 
+             />
+           ) : (
+             <div className="text-center mt-20 text-zinc-500">Sign in to access the network grid.</div>
+           )
+        )}
+
         {currentView === 'account' && (
           session ? (
             <div className="max-w-md mx-auto text-center mt-12 space-y-4">
@@ -229,32 +261,6 @@ export default function App() {
           ) : (
             <AuthView setSession={setSession} />
           )
-        )}
-        {currentView === 'network' && (
-           session ? <ConnectionsView session={session} /> : (
-             <div className="text-center mt-20 text-zinc-500">Sign in to access the network grid.</div>
-           )
-        )}
-
-        {currentView === 'dashboard' && (
-          <DashboardView 
-            tasks={viewingFriend ? friendTasks : tasks} // Swap data source
-            updateTask={updateTask} 
-            deleteTask={deleteTask} 
-            activeWeek={activeWeek} 
-            setActiveWeek={setActiveWeek} 
-            calculateDailyScore={calculateDailyScore}
-            readOnly={!!viewingFriend} // Pass readOnly flag
-            friendName={viewingFriend?.username}
-            exitFriendView={() => setViewingFriend(null)} // Close button
-          />
-        )}
-        {currentView === 'planner' && <PlannerView addTask={addTask} activeWeek={activeWeek} setActiveWeek={setActiveWeek} setCurrentView={setCurrentView} />}
-        {currentView === 'braindump' && <BrainDumpView brainDumps={brainDumps} setBrainDumps={setBrainDumps} />}
-        {currentView === 'network' && (
-           session ? <ConnectionsView session={session} setViewingFriend={setViewingFriend} setCurrentView={setCurrentView} /> : (
-             <div className="text-center mt-20 text-zinc-500">Sign in to access the network grid.</div>
-           )
         )}
         
       </div>

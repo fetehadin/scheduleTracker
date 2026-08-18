@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Header({ isDarkMode, setIsDarkMode, currentView, setCurrentView, debtHours, handleResetDebt }) {
+export default function Header({ isDarkMode, setIsDarkMode, currentView, setCurrentView, debtHours, handleResetDebt, session }) {
   return (
     <header className="flex flex-col md:flex-row justify-between items-center bg-white dark:bg-zinc-900 p-8 rounded-xl border border-zinc-200 dark:border-zinc-800 transition-colors shadow-sm">
       <div className="w-full md:w-auto text-center md:text-left flex flex-col items-center md:items-start">
@@ -12,13 +12,13 @@ export default function Header({ isDarkMode, setIsDarkMode, currentView, setCurr
         </div>
         
         <div className="flex gap-4 mt-4 justify-center md:justify-start">
-          {['dashboard', 'planner', 'braindump'].map((view) => (
+          {['dashboard', 'planner', 'braindump', 'account'].map((view) => (
             <button 
               key={view}
               onClick={() => setCurrentView(view)}
               className={`text-sm font-medium pb-1 border-b-2 capitalize transition-colors ${currentView === view ? 'border-zinc-900 text-zinc-900 dark:border-zinc-100 dark:text-zinc-100' : 'border-transparent text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'}`}
             >
-              {view.replace('braindump', 'Brain Dump')}
+              {view === 'braindump' ? 'Brain Dump' : view === 'account' && session ? 'Cloud (Active)' : view}
             </button>
           ))}
         </div>

@@ -21,6 +21,10 @@ export default function DashboardView({
   // Determine which days to render based on the dropdown
   const daysToRender = selectedDay === 'All' ? SORTED_DAYS : [selectedDay];
 
+  // Dynamically generate week options based on tasks, defaulting to at least 5 weeks
+  const maxWeek = Math.max(5, activeWeek, ...tasks.map(t => t.week || 1));
+  const weekOptions = Array.from({ length: maxWeek }, (_, i) => i + 1);
+
   return (
     <div className="space-y-8">
       {/* Read-Only Banner */}
@@ -35,12 +39,22 @@ export default function DashboardView({
 
       {/* Week & Day Pagination Controls */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
-        <div className="flex items-center space-x-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
-          <button onClick={() => setActiveWeek(Math.max(1, activeWeek - 1))} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&larr;</button>
-          <span className="font-bold text-sm min-w-[4rem] text-center">Week {activeWeek}</span>
-          <button onClick={() => setActiveWeek(activeWeek + 1)} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&rarr;</button>
+        
+        {/* NEW Week Dropdown */}
+        <div className="flex items-center space-x-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
+          <span className="text-xs font-bold text-zinc-500 uppercase ml-2">Week:</span>
+          <select 
+            value={activeWeek} 
+            onChange={(e) => setActiveWeek(parseInt(e.target.value))}
+            className="bg-transparent text-sm font-bold focus:outline-none cursor-pointer pr-2 text-zinc-900 dark:text-zinc-100"
+          >
+            {weekOptions.map(w => (
+              <option key={w} value={w}>Week {w}</option>
+            ))}
+          </select>
         </div>
 
+        {/* Day Dropdown */}
         <div className="flex items-center space-x-2 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
           <span className="text-xs font-bold text-zinc-500 uppercase ml-2">Filter Day:</span>
           <select 

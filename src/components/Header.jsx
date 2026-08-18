@@ -12,7 +12,7 @@ export default function Header({ isDarkMode, setIsDarkMode, currentView, setCurr
         </div>
         
         <div className="flex gap-4 mt-4 justify-center md:justify-start">
-          {['dashboard', 'planner', 'braindump', 'account'].map((view) => (
+          {['dashboard', 'planner', 'braindump', 'network', 'account'].map((view) => (
             <button 
               key={view}
               onClick={() => setCurrentView(view)}

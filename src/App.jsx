@@ -5,6 +5,7 @@ import DashboardView from './components/DashboardView';
 import PlannerView from './components/PlannerView';
 import BrainDumpView from './components/BrainDumpView';
 import AuthView from './components/AuthView';
+import ConnectionsView from './components/ConnectionsView';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -34,6 +35,9 @@ export default function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  const [viewingFriend, setViewingFriend] = useState(null); 
+  const [friendTasks, setFriendTasks] = useState([]);
+
   // --- AUTHENTICATION & DATA SYNC ENGINE ---
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
@@ -48,6 +52,33 @@ export default function App() {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // --- FETCH FRIEND'S READ-ONLY DASHBOARD ---
+  useEffect(() => {
+    const fetchFriendTasks = async () => {
+      if (!viewingFriend) return;
+      // Because we set up Row-Level Security, Supabase will automatically
+      // reject this if we aren't friends, and only return is_shareable = true.
+      const { data, error } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', viewingFriend.id);
+        
+      if (!error && data) {
+        setFriendTasks(data.map(t => ({
+          id: t.id,
+          title: t.title,
+          category: t.category,
+          allocatedHours: t.allocated_hours,
+          progress: t.progress,
+          week: t.week,
+          day: t.day,
+          note: t.note
+        })));
+      }
+    };
+    fetchFriendTasks();
+  }, [viewingFriend]);
 
   const syncCloudTasks = async (userId) => {
     // 1. The Migration: Move local tasks to cloud
@@ -198,6 +229,32 @@ export default function App() {
           ) : (
             <AuthView setSession={setSession} />
           )
+        )}
+        {currentView === 'network' && (
+           session ? <ConnectionsView session={session} /> : (
+             <div className="text-center mt-20 text-zinc-500">Sign in to access the network grid.</div>
+           )
+        )}
+
+        {currentView === 'dashboard' && (
+          <DashboardView 
+            tasks={viewingFriend ? friendTasks : tasks} // Swap data source
+            updateTask={updateTask} 
+            deleteTask={deleteTask} 
+            activeWeek={activeWeek} 
+            setActiveWeek={setActiveWeek} 
+            calculateDailyScore={calculateDailyScore}
+            readOnly={!!viewingFriend} // Pass readOnly flag
+            friendName={viewingFriend?.username}
+            exitFriendView={() => setViewingFriend(null)} // Close button
+          />
+        )}
+        {currentView === 'planner' && <PlannerView addTask={addTask} activeWeek={activeWeek} setActiveWeek={setActiveWeek} setCurrentView={setCurrentView} />}
+        {currentView === 'braindump' && <BrainDumpView brainDumps={brainDumps} setBrainDumps={setBrainDumps} />}
+        {currentView === 'network' && (
+           session ? <ConnectionsView session={session} setViewingFriend={setViewingFriend} setCurrentView={setCurrentView} /> : (
+             <div className="text-center mt-20 text-zinc-500">Sign in to access the network grid.</div>
+           )
         )}
         
       </div>

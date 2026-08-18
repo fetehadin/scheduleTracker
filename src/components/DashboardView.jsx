@@ -3,16 +3,27 @@ import React from 'react';
 const DAY_ORDER = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
 const SORTED_DAYS = Object.keys(DAY_ORDER).sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
 
-export default function DashboardView({ tasks, updateTask, deleteTask, activeWeek, setActiveWeek, calculateDailyScore }) {
+export default function DashboardView({ tasks, updateTask, deleteTask, activeWeek, setActiveWeek, calculateDailyScore, readOnly, friendName, exitFriendView }) {
   const filteredTasks = tasks.filter(t => t.week === activeWeek);
   const tasksByDay = filteredTasks.reduce((acc, task) => {
     if (!acc[task.day]) acc[task.day] = [];
     acc[task.day].push(task);
     return acc;
   }, {});
-  
+
   return (
     <div className="space-y-8">
+      {/* Read-Only Banner */}
+      {readOnly && (
+        <div className="bg-teal-500/10 border border-teal-500/20 text-teal-700 dark:text-teal-400 p-4 rounded-xl flex justify-between items-center">
+          <span className="font-bold">👀 Viewing @{friendName}'s Dashboard</span>
+          <button onClick={exitFriendView} className="text-xs font-bold bg-teal-500/20 px-3 py-1.5 rounded hover:bg-teal-500/30 transition-colors">
+            Return to My Dashboard
+          </button>
+        </div>
+      )}
+
+      {/* Infinite Week Navigator */}
       <div className="flex items-center space-x-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">
         <button onClick={() => setActiveWeek(Math.max(1, activeWeek - 1))} className="px-3 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-500 font-bold">&larr;</button>
         <span className="font-bold text-sm min-w-[4rem] text-center">Week {activeWeek}</span>
@@ -41,9 +52,13 @@ export default function DashboardView({ tasks, updateTask, deleteTask, activeWee
               <div className="grid gap-4">
                 {dayTasks.map(task => (
                   <div key={task.id} className="group relative bg-white dark:bg-zinc-900 p-5 rounded-xl border border-zinc-300 dark:border-zinc-700 transition-colors">
-                    <button onClick={() => deleteTask(task.id)} className="absolute top-4 right-4 text-zinc-400 hover:text-rose-500 transition-colors">
-                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
+                    
+                    {/* Only show delete button if NOT readOnly */}
+                    {!readOnly && (
+                      <button onClick={() => deleteTask(task.id)} className="absolute top-4 right-4 text-zinc-400 hover:text-rose-500 transition-colors">
+                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                      </button>
+                    )}
                     
                     <div className="pr-8 mb-4">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">{task.category}</span>
@@ -52,7 +67,13 @@ export default function DashboardView({ tasks, updateTask, deleteTask, activeWee
                     </div>
 
                     <div className="flex items-center gap-4 mb-4">
-                      <input type="range" min="0" max="100" step="5" value={task.progress} onChange={(e) => updateTask(task.id, 'progress', parseInt(e.target.value))} className="flex-grow h-1 bg-zinc-200 dark:bg-zinc-800 rounded appearance-none cursor-pointer accent-zinc-900 dark:accent-zinc-300" />
+                      <input 
+                        type="range" min="0" max="100" step="5" 
+                        value={task.progress} 
+                        onChange={(e) => !readOnly && updateTask(task.id, 'progress', parseInt(e.target.value))} 
+                        disabled={readOnly}
+                        className={`flex-grow h-1 bg-zinc-200 dark:bg-zinc-800 rounded appearance-none accent-zinc-900 dark:accent-zinc-300 ${readOnly ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`} 
+                      />
                       <span className="text-sm font-bold w-10 text-right">{task.progress}%</span>
                     </div>
                   </div>

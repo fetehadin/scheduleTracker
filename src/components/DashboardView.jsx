@@ -3,17 +3,14 @@ import React from 'react';
 const DAY_ORDER = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
 const SORTED_DAYS = Object.keys(DAY_ORDER).sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
 
-export default function DashboardView({ tasks, setTasks, activeWeek, setActiveWeek, calculateDailyScore }) {
+export default function DashboardView({ tasks, updateTask, deleteTask, activeWeek, setActiveWeek, calculateDailyScore }) {
   const filteredTasks = tasks.filter(t => t.week === activeWeek);
   const tasksByDay = filteredTasks.reduce((acc, task) => {
     if (!acc[task.day]) acc[task.day] = [];
     acc[task.day].push(task);
     return acc;
   }, {});
-
-  const updateTask = (id, field, value) => setTasks(tasks.map(t => t.id === id ? { ...t, [field]: value } : t));
-  const deleteTask = (id) => setTasks(tasks.filter(t => t.id !== id));
-
+  
   return (
     <div className="space-y-8">
       <div className="flex items-center space-x-4 bg-white dark:bg-zinc-900 p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 w-fit transition-colors">

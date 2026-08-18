@@ -3,28 +3,16 @@ import React, { useState } from 'react';
 const DAY_ORDER = { 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7 };
 const SORTED_DAYS = Object.keys(DAY_ORDER).sort((a, b) => DAY_ORDER[a] - DAY_ORDER[b]);
 
-export default function PlannerView({ tasks, setTasks, activeWeek, setActiveWeek, setCurrentView }) {
+export default function PlannerView({ addTask, activeWeek, setActiveWeek, setCurrentView }) {
   const [newTask, setNewTask] = useState({ 
-    title: '', 
-    category: '', 
-    week: activeWeek, 
-    day: 'Monday', 
-    hours: 1,
-    is_shareable: true // Defaults to public, per the schema
+    title: '', category: '', week: activeWeek, day: 'Monday', hours: 1, is_shareable: true 
   });
 
   const handleAddTask = (e) => {
     e.preventDefault();
     if (!newTask.title.trim()) return;
     
-    setTasks([...tasks, { 
-      id: Date.now(), 
-      ...newTask, 
-      hours: parseFloat(newTask.hours), 
-      allocatedHours: parseFloat(newTask.hours), 
-      progress: 0, 
-      note: '' 
-    }]);
+    addTask(newTask); // Call the master engine
     
     setCurrentView('dashboard');
     setActiveWeek(parseInt(newTask.week));

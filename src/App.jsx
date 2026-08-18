@@ -146,7 +146,13 @@ export default function App() {
       message: message.trim()
     }]).select();
 
-    if (data && !error) {
+    if (error) {
+      console.error("Feedback Blocked:", error.message);
+      alert("System Error: " + error.message);
+      return;
+    }
+
+    if (data) {
        setFeedbacks(prev => [...prev, { ...data[0], sender_username: session.user.user_metadata.username }]);
     }
   };
